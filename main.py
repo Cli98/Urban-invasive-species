@@ -27,6 +27,7 @@ import torchvision.datasets as datasets
 import torchvision.models as models
 from meter import AverageMeter, ProgressMeter
 from util import save_checkpoint, adjust_learning_rate, accuracy, reset_folder, compute_mean, tune_scenario1
+from util import run_scenario2
 from data.Scenario_data_loader import Scenario1, Scenario2, Scenario3
 
 model_names = sorted(name for name in models.__dict__
@@ -45,16 +46,16 @@ parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
                         ' (default: resnet18)')
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
-parser.add_argument('--epochs', default=30, type=int, metavar='N',
+parser.add_argument('--epochs', default=90, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=64, type=int,
+parser.add_argument('-b', '--batch-size', default=32, type=int,
                     metavar='N',
                     help='mini-batch size (default: 256), this is the total '
                          'batch size of all GPUs on the current node when '
                          'using Data Parallel or Distributed Data Parallel')
-parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.0001, type=float,
                     metavar='LR', help='initial learning rate', dest='lr')
 parser.add_argument('--momentum', default=0.99, type=float, metavar='M',
                     help='momentum')
@@ -143,7 +144,7 @@ def main_worker(gpu, ngpus_per_node, args):
     :return: None
     """
 
-    global best_acc1
+    best_acc1 = float("-inf")
     args.gpu = gpu
 
     if args.gpu is not None:
@@ -283,7 +284,7 @@ def main_worker(gpu, ngpus_per_node, args):
             performance_list.append([acc1, acc5])
             performance_dict[str(args.momentum) + " " + str(args.batch_size) + " " + \
                              str(args.epochs) + " " + str(args.lr)] = round(float(acc1.cpu()),2)
-            print(sorted(performance_dict.items(), key=lambda x: x[-1], reverse=True)[0])
+            #print("finalized performance: ", sorted(performance_dict.items(), key=lambda x: x[-1], reverse=True)[0])
 
         # remember best acc@1 and save checkpoint
         is_best = acc1 > best_acc1
@@ -298,6 +299,9 @@ def main_worker(gpu, ngpus_per_node, args):
                 'best_acc1': best_acc1,
                 'optimizer' : optimizer.state_dict(),
             }, is_best)
+    print("conf: ", str(args.momentum) + " " + str(args.batch_size) + " " + \
+                             str(args.epochs) + " " + str(args.lr))
+    print("best classfication score: ", str(best_acc1))
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
@@ -416,10 +420,7 @@ if __name__ == '__main__':
     # args.lr = 0.001
 
     target = "data"
-    total_year = 7
-    current_scenario = Scenario1(split_ratio = 0.75)
-    print(current_scenario.compare_folder_difference(2012,2013))
-    tune_scenario1(args, performance_dict)
+    run_scenario2(performance_list, keep_k_val = 4, train_region_count = [16])
 
 
 

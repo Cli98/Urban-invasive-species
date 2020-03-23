@@ -3,8 +3,8 @@ import shutil
 import os
 import numpy as np
 import cv2
-from main import main
 from data.Scenario_data_loader import Scenario1, Scenario2, Scenario3
+
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     """
@@ -113,6 +113,7 @@ def EDA_image_resolution(target, pos, neg, affix="jpg"):
 
 def run_scenario1_all_year_ratio(performance_list):
     """A wrapper to train scenario 1"""
+    from main import main
     target = "data"
     total_year = 7
     # Prepare file to train
@@ -172,6 +173,7 @@ def scenario1_wrapper():
     """
     # fix split ratio as 0.7
     # fix year for all year
+    from main import main
     target = "data"
     total_year = 7
     year_list = [2012+i for i in range(total_year)]
@@ -182,9 +184,10 @@ def scenario1_wrapper():
     main()
 
 
-def run_scenario2(performance_list, region_count = [5, 10, 15, 19]):
+def run_scenario2(performance_list, keep_k_val, train_region_count = [5, 10, 15, 19]):
+    from main import main
     target = "data"
-    # only for scenario 2
+    # only for scenario 2, performance_list is a global varilable to record performance
     if os.path.exists(os.path.join(target, "All_invasive")):
         shutil.rmtree(os.path.join(target, "All_invasive"))
         shutil.rmtree(os.path.join(target, 'All_Noninvasive'))
@@ -192,9 +195,13 @@ def run_scenario2(performance_list, region_count = [5, 10, 15, 19]):
     data_loader = Scenario2()
     data_loader.prepare_dataset()
     data_loader.get_available_region()
-    for count in region_count:
+    neg_region = data_loader.get_all_samples_within_single_class()
+    #print(neg_region)
+    for keep_k_train in train_region_count:
         reset_folder(target)
-        train_region, val_region = data_loader.get_training_region(k=count)
+        train_region, val_region = data_loader.get_training_region(keep_k_train, keep_k_val, exclude_region=neg_region)
+        #print(len(train_region),len(val_region))
+        #print(val_region)
         data_loader.complete_dataset(train_region, val_region)
         main()
 
@@ -204,8 +211,9 @@ def run_scenario2(performance_list, region_count = [5, 10, 15, 19]):
         print(round(float(ele[0].cpu()),2),round(float(ele[1].cpu()),2))
 
 
-def tune_scenario2(args, performance_dict):
+def tune_scenario2(args, performance_dict, keep_k_train, keep_k_val, exclude_region=None):
     """A wrapper to train scenario 2"""
+    from main import main
     target = "data"
     para_tune = {"batch_sizes":[32, 64, 128, 256],
                  "learning_rates":[1e-2, 1e-3, 1e-4, 1e-5],
@@ -233,7 +241,8 @@ def tune_scenario2(args, performance_dict):
                     args.epochs = epoch
                     args.lr = lr
                     reset_folder(target)
-                    train_region, val_region = data_loader.get_training_region(k=region_count)
+                    train_region, val_region = data_loader.get_training_region(
+                        keep_k_train, keep_k_val, exclude_region=None)
                     data_loader.complete_dataset(train_region, val_region)
                     main()
                     print("Current progress: ", str(progress) , "/" , str(total_comb))
@@ -270,6 +279,7 @@ def tune_scenario3(args, performance_dict):
 
 def run_scenario3(train_year= [2012, 2014, 2016, 2018], valid_year= [2013, 2015, 2017]):
     """A wrapper to run scenario 3"""
+    from main import main
     target = "data"
     print("Training year is: "+str(train_year))
     print("Validation year is: "+str(valid_year))

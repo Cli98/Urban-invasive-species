@@ -184,12 +184,14 @@ class Scenario2(DataLoader):
                 region_name = ''.join(x for x in file.split(r"/")[-1].split("_")[0].lower() if x.isalpha())
                 self.avail_region.add(region_name)
                 self.region_count[region_name + "_pos"] = self.region_count.get(region_name + "_pos", 0) + 1
+                self.region_count[region_name + "_neg"] = self.region_count.get(region_name + "_neg", 0)
             for file in neg_file_loc:
                 newName = str(year) + '_' + file.split(r"/")[-1]
                 shutil.copy(file, os.path.join(target, 'All_Noninvasive', newName))
                 region_name = ''.join(x for x in file.split(r"/")[-1].split("_")[0].lower() if x.isalpha())
                 self.avail_region.add(region_name)
                 self.region_count[region_name + "_neg"] = self.region_count.get(region_name + "_neg", 0) + 1
+                self.region_count[region_name + "_pos"] = self.region_count.get(region_name + "_pos", 0)
         self.EDA_available_region()
         return
 
@@ -206,17 +208,38 @@ class Scenario2(DataLoader):
             print("For region "+str(key)+", the number is: "+str(val))
 
 
-    def get_training_region(self, k=5):
-        val_region = sorted(self.avail_region)
-        if len(val_region)<=k:
+    def get_training_region(self, keep_k_train, keep_k_val = 4, exclude_region = None):
+        train_region = sorted(self.avail_region)
+        if len(train_region) <= keep_k_train:
             print("The total number of available region is less than required amount")
             print("Not able to get train region")
             return
         random.seed(self.seed)
-        random.shuffle(val_region)
-        train_region = [val_region.pop(0) for _ in range(k)]
-        assert len(train_region) == k
+        random.shuffle(train_region)
+        val_region = []
+        #print("check order: ", train_region)
+        for reg in train_region:
+            if reg in exclude_region:
+                print("region "+str(reg)+" excluded!")
+                continue
+            val_region.append(reg)
+            if len(val_region) == keep_k_val:
+                break
+        if keep_k_train:
+            train_region = train_region[:keep_k_train]
+        if len(train_region) < keep_k_train:
+            print("Not enough training region sampled!")
         return train_region, val_region
+
+
+    def get_all_samples_within_single_class(self, keep_k = None):
+        target_region = []
+        for reg in self.avail_region:
+            pos_count = self.region_count[reg + "_pos"]
+            neg_count = self.region_count[reg + "_neg"]
+            if pos_count == 0 or neg_count == 0:
+                target_region.append(reg)
+        return target_region[:keep_k]
 
 
     def complete_dataset(self, train_region, val_region, target=None, affix="jpg"):
@@ -230,6 +253,8 @@ class Scenario2(DataLoader):
             os.makedirs(os.path.join(target, 'val', 'invasive'), exist_ok=False)
             os.makedirs(os.path.join(target, 'val', 'noninvasive'), exist_ok=False)
 
+        assert len(train_region)>0, "No training data generated!"
+        assert len(val_region)>0, "No validation data generated!"
         train_region_pos = self.find_data_by_region(train_region, 1)
         train_region_neg = self.find_data_by_region(train_region, 0)
         val_region_pos = self.find_data_by_region(val_region, 1)
