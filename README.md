@@ -9,11 +9,7 @@ Invasive plants are a major agent threatening biodiversity conservation and dire
 The results demonstrate a promising spatial and temporal generalization capacity of deep learning to detect urban invasive plants. In particular, the performance of ResNet was consistently over 96.2% using training samples from 8 (out of 20) or more parks. The model trained by samples from only 4 parks still achieved an accuracy of 77.4%. ResNet was further found tolerant 34 of high contextual variation caused by autumn olive’s progressive invasion and the difference in illumination condition over the years. Our findings shed light on prioritized mitigation actions for effectively managing urban invasive plants.
 
 Implementation:
-In this project, three challenges are proposed as,
-1. How will different years affect invasion process?
-2. What's the plant condition for different regions?
-3. What's the classification performance with cross-validation?
 
-To deal with those challenges, this repo provides three data loaders for each scenario. Then data is prepared and sent to pytorch deep learning model. Results are reported after training phase concludes.
+To deal with those challenges, this repo provides three data loaders for each scenario presented in the paper. Then data is prepared and sent to pytorch deep learning model. Results are reported after training phase completes.
 
 Please feel free to leave any comments and feedback. Thank you for your interest.
