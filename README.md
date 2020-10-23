@@ -12,4 +12,4 @@ Implementation:
 
 To deal with those challenges, this repo provides three data loaders for each scenario presented in the paper. Then data is prepared and sent to pytorch deep learning model. Results are reported after training phase completes.
 
-Please feel free to leave any comments and feedback. Thank you for your interest.
+Please feel free to leave any comments and feedback to cli33@uncc.edu. Thank you for your interest.
