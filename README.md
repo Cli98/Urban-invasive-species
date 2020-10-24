@@ -1,5 +1,5 @@
 # Urban-invasive-species
-Code for "Detecting Plant Invasion in Urban Parks with Aerial Image Time Series and Residual Neural Network". The paper has been accepted to remotesensing journel on Oct 22 2020.
+Code for "Detecting Plant Invasion in Urban Parks with Aerial Image Time Series and Residual Neural Network". The paper has been accepted to remote sensing journal on Oct 22 2020.
 
 
 Background:
